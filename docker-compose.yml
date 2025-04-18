@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  mail_parser:
+    build: .
+    container_name: mail_parser_service
+    env_file:
+      - .env
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - internal_net
+
+networks:
+  internal_net:
+    driver: bridge
