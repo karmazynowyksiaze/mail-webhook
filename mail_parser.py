@@ -12,13 +12,22 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ENVIRONMENT
-EMAIL = "pawel.pawlowski@panowie.it"
-PASSWORD = "!jiQ1[Fe9V+i4"
+"""
+EMAIL = os.environ.get('EMAIL')
+PASSWORD = os.environ.get('EMAIL_PASSWORD')
 IMAP_SERVER = os.environ.get('IMAP_SERVER')
 IMAP_PORT = int(os.environ.get('IMAP_PORT', 993))
 POLL_INTERVAL = int(os.environ.get('POLL_INTERVAL', 30))
 BUBBLE_API_ENDPOINT = os.environ.get('BUBBLE_ENDPOINT')
 BUBBLE_API_TOKEN = os.environ.get('BUBBLE_TOKEN')
+"""
+EMAIL = "helpdesk@panowie.it"
+PASSWORD = "%jaS2?Mp7T%x2"
+IMAP_SERVER = "imap.dpoczta.pl"
+IMAP_PORT = 993
+POLL_INTERVAL = 30
+BUBBLE_API_ENDPOINT = "https://wwlserwis.bubbleapps.io/version-test/api/1.1/wf/przychodzace_email_helpdesk/initialize"
+BUBBLE_API_TOKEN = "13e56772fbf0ef505feb67521850a303"
 
 def safe_get_attr(obj, attr_name, default=""):
     """Bezpiecznie pobiera atrybut obiektu"""
@@ -101,6 +110,8 @@ def fetch_new_emails():
                 print(f"Załączniki ({len(attachments)}): {filenames}")
             else:
                 print("Brak załączników.")
+            
+            attachments_filenames = [att['filename'] for att in attachments]
                 
             # Skrócona wersja treści
             body_preview = body[:500] + "..." if len(body) > 500 else body
@@ -109,7 +120,8 @@ def fetch_new_emails():
 
             # Przygotowanie danych dla Bubble API
             # Konwersja obiektów adresu email na format tekstowy
-            from_email_str = f"{from_email[0][0]} <{from_email[0][1]}>" if from_email else ""
+            from_name_str = f"{from_email[0][0]}" if from_email else ""
+            from_email_str = f"{from_email[0][1]}" if from_email else ""
             to_str = [f"{name} <{email}>" for name, email in to] if to else []
             cc_str = [f"{name} <{email}>" for name, email in cc] if cc else []
             bcc_str = [f"{name} <{email}>" for name, email in bcc] if bcc else []
@@ -117,12 +129,13 @@ def fetch_new_emails():
             # SEND TO BUBBLE
             payload = {
                 'subject': subject,
-                'from': from_email_str,
+                'from_name': from_name_str,
+                'from_email': from_email_str,
                 'to': to_str,
                 'cc': cc_str,
                 'bcc': bcc_str,
                 'body': body,
-                'attachments': attachments
+                'attachments_filenames': attachments_filenames
             }
 
             headers = {
