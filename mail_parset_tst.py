@@ -17,8 +17,8 @@ PASSWORD = "!jiQ1[Fe9V+i4"
 IMAP_SERVER = os.environ.get('IMAP_SERVER')
 IMAP_PORT = int(os.environ.get('IMAP_PORT', 993))
 POLL_INTERVAL = int(os.environ.get('POLL_INTERVAL', 30))
-BUBBLE_API_ENDPOINT = os.environ.get('BUBBLE_ENDPOINT')
-BUBBLE_API_TOKEN = os.environ.get('BUBBLE_TOKEN')
+#BUBBLE_API_ENDPOINT = os.environ.get('BUBBLE_ENDPOINT')
+#BUBBLE_API_TOKEN = os.environ.get('BUBBLE_TOKEN')
 
 def safe_get_attr(obj, attr_name, default=""):
     """Bezpiecznie pobiera atrybut obiektu"""
@@ -114,6 +114,7 @@ def fetch_new_emails():
             cc_str = [f"{name} <{email}>" for name, email in cc] if cc else []
             bcc_str = [f"{name} <{email}>" for name, email in bcc] if bcc else []
             
+            """
             # SEND TO BUBBLE
             payload = {
                 'subject': subject,
@@ -140,12 +141,13 @@ def fetch_new_emails():
                 print(f"[ERR] Nie udało się wysłać do Bubble: {e}")
                 traceback.print_exc()
 
+            """
 if __name__ == '__main__':
     print("Start aplikacji EmailWebhook...")
     print(f"Konfiguracja:")
     print(f"  IMAP: {IMAP_SERVER}:{IMAP_PORT}")
     print(f"  E-mail: {EMAIL}")
-    print(f"  Bubble API: {'Skonfigurowane' if BUBBLE_API_ENDPOINT and BUBBLE_API_TOKEN else 'BRAK KONFIGURACJI'}")
+    #print(f"  Bubble API: {'Skonfigurowane' if BUBBLE_API_ENDPOINT and BUBBLE_API_TOKEN else 'BRAK KONFIGURACJI'}")
     print(f"  Interwał sprawdzania: {POLL_INTERVAL} sekund")
     print("=" * 60)
 
