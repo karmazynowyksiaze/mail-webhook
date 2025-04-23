@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ENVIRONMENT
-"""
+
 EMAIL = os.environ.get('EMAIL')
 PASSWORD = os.environ.get('EMAIL_PASSWORD')
 IMAP_SERVER = os.environ.get('IMAP_SERVER')
@@ -20,14 +20,6 @@ IMAP_PORT = int(os.environ.get('IMAP_PORT', 993))
 POLL_INTERVAL = int(os.environ.get('POLL_INTERVAL', 30))
 BUBBLE_API_ENDPOINT = os.environ.get('BUBBLE_ENDPOINT')
 BUBBLE_API_TOKEN = os.environ.get('BUBBLE_TOKEN')
-"""
-EMAIL = "helpdesk@panowie.it"
-PASSWORD = "%jaS2?Mp7T%x2"
-IMAP_SERVER = "imap.dpoczta.pl"
-IMAP_PORT = 993
-POLL_INTERVAL = 30
-BUBBLE_API_ENDPOINT = "https://wwlserwis.bubbleapps.io/version-test/api/1.1/wf/przychodzace_email_helpdesk/initialize"
-BUBBLE_API_TOKEN = "13e56772fbf0ef505feb67521850a303"
 
 def safe_get_attr(obj, attr_name, default=""):
     """Bezpiecznie pobiera atrybut obiektu"""
