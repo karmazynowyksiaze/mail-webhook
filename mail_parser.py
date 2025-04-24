@@ -5,12 +5,15 @@ import time
 import os
 import traceback
 import html2text
-from io import BytesIO
+import boto3
+from botocore.exceptions import NoCredentialsError
 from datetime import datetime
 from dotenv import load_dotenv
 
-# ENVIRONMENT
+# Load environment variables from .env file
 load_dotenv()
+
+# ENVIRONMENT
 
 EMAIL = os.environ.get('EMAIL')
 PASSWORD = os.environ.get('EMAIL_PASSWORD')
@@ -20,9 +23,21 @@ POLL_INTERVAL = int(os.environ.get('POLL_INTERVAL', 30))
 BUBBLE_API_ENDPOINT = os.environ.get('BUBBLE_ENDPOINT')
 BUBBLE_FILE_UPLOAD_ENDPOINT = os.environ.get('BUBBLE_FILE_UPLOAD_ENDPOINT')
 BUBBLE_API_TOKEN = os.environ.get('BUBBLE_TOKEN')
+AWS_ACCESS_KEY = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_S3_BUCKET = os.environ.get('AWS_S3_BUCKET')
+AWS_S3_REGION = os.environ.get('AWS_S3_REGION')
 
-#GET ITEM ATTRIBUTES
+s3_client = boto3.client(
+    's3',
+    region_name= AWS_S3_REGION,
+    aws_access_key_id=AWS_ACCESS_KEY,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+)
+
+#GET ITEM ATRIBUTES
 def safe_get_attr(obj, attr_name, default=""):
+    """Bezpiecznie pobiera atrybut obiektu"""
     return getattr(obj, attr_name, default) if hasattr(obj, attr_name) else default
 
 def upload_file_to_bubble(file_bytes, filename):
@@ -68,7 +83,8 @@ def fetch_new_emails():
             to = message.get_addresses('to')
             cc = message.get_addresses('cc')
             bcc = message.get_addresses('bcc')
-
+            
+            # HTML MESSAGES(text or html)
             if message.text_part:
                 body = message.text_part.get_payload().decode(message.text_part.charset)
             elif message.html_part:
@@ -76,25 +92,43 @@ def fetch_new_emails():
                 body = html2text.html2text(html_body)
             else:
                 body = "[Brak treści]"
-
+                
+            # SEARCHING ATACHMENTS
             attachments = []
-
+            
+            print(f"\n[DEBUG] Struktura wiadomości (uid: {uid}):")
             for i, part in enumerate(message.mailparts):
+                filename = safe_get_attr(part, 'filename', 'brak')
+                print(f"nazwa pliku={filename}")
+                
+                
                 if part == message.text_part or part == message.html_part:
                     continue
-
-                # Poprawka błędu: get_content_disposition nie istnieje w pyzmail
-                if part.filename:
-                    filename = part.filename or f"attachment_{i}"
+                    
+                
+                is_attachment = False
+                
+                
+                if filename != 'brak':
+                    is_attachment = True
+                
+                if is_attachment:
+                    attachment_filename = filename if filename != 'brak' else f'zalacznik_{i+1}'
                     file_content = part.get_payload()
-                    file_url = upload_file_to_bubble(file_content, filename)
-
-                    if file_url:
-                        attachments.append({
-                            'filename': filename,
-                            'url': file_url
-                        })
-
+                    content_type = part.get_content_type() if hasattr(part, 'get_content_type') else 'application/octet-stream'
+    
+                    date_prefix = datetime.now().strftime('%Y-%m-%d')
+                    s3_path = f"{date_prefix}/{attachment_filename}"
+                    full_s3_key = f"email_attachments/{s3_path}"
+    
+                    s3_url = upload_to_s3(file_content, full_s3_key, content_type)
+    
+                    attachments.append({
+                        'filename': attachment_filename,
+                        'url': s3_url
+                    })
+            
+            # LOG ONLY
             print("=" * 60)
             print(f"Nowy e-mail (UID: {uid}):")
             print(f"Temat: {subject}")
@@ -104,7 +138,8 @@ def fetch_new_emails():
                 print(f"CC: {cc}")
             if bcc:
                 print(f"BCC: {bcc}")
-
+                
+            # LOG ATTACHMENTS
             if attachments:
                 filenames = ', '.join([att['filename'] for att in attachments])
                 print(f"Załączniki ({len(attachments)}): {filenames}")
@@ -113,7 +148,8 @@ def fetch_new_emails():
 
             attachments_filenames = [att['filename'] for att in attachments]
             attachments_urls = [att['url'] for att in attachments]
-
+            print (f"URL: {attachments_urls}")
+                
             body_preview = body[:500] + "..." if len(body) > 500 else body
             print(f"\nTreść (fragment):\n{body_preview}")
             print("=" * 60)
@@ -124,6 +160,7 @@ def fetch_new_emails():
             cc_str = [f"{name} <{email}>" for name, email in cc] if cc else []
             bcc_str = [f"{name} <{email}>" for name, email in bcc] if bcc else []
 
+            # SEND TO BUBBLE
             payload = {
                 'subject': subject,
                 'from_name': from_name_str,
@@ -133,13 +170,14 @@ def fetch_new_emails():
                 'bcc': bcc_str,
                 'body': body,
                 'attachments_filenames': attachments_filenames,
-                'attachments_urls': attachments_urls,
+                'attachments_urls': attachments_urls
             }
 
             headers = {
                 'Content-Type': 'application/json',
                 'Authorization': f'Bearer {BUBBLE_API_TOKEN}'
             }
+
             try:
                 response = requests.post(BUBBLE_API_ENDPOINT, json=payload, headers=headers)
                 if response.status_code == 200:
