@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = 'ppawlowski186/mail-webhook' //docer image
-        DOCKER_TAG = "${env.BUILD_NUMBER}"
+        DOCKER_TAG = "1.${env.BUILD_NUMBER}"
     }
 
     triggers {
