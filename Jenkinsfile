@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'ppawlowski186/mail-webhook'
+        DOCKER_IMAGE = 'ppawlowski186/mail-webhook' //docer image
         DOCKER_TAG = "${env.BUILD_NUMBER}"
     }
 
