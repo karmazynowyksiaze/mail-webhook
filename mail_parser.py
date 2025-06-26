@@ -18,6 +18,7 @@ EMAIL = os.environ.get('EMAIL')
 PASSWORD = os.environ.get('EMAIL_PASSWORD')
 IMAP_SERVER = os.environ.get('IMAP_SERVER')
 IMAP_PORT = int(os.environ.get('IMAP_PORT', 993))
+SSL_AUTH = os.environ.get('SSL_AUTH', True)
 POLL_INTERVAL = int(os.environ.get('POLL_INTERVAL', 30))
 BUBBLE_API_ENDPOINT = os.environ.get('BUBBLE_ENDPOINT')
 BUBBLE_API_TOKEN = os.environ.get('BUBBLE_TOKEN')
@@ -33,7 +34,7 @@ def safe_get_attr(part, attr_name, default=None):
         return default
 
 def fetch_new_emails():
-    with imapclient.IMAPClient(IMAP_SERVER, ssl=True) as client:
+    with imapclient.IMAPClient(IMAP_SERVER, ssl=SSL_AUTH) as client:
         client.login(EMAIL, PASSWORD)
         client.select_folder('INBOX', readonly=False)
 
