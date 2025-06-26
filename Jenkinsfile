@@ -13,9 +13,9 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git credentialsId: 'github-credentials-id', url: 'https://github.com/karmazynowyksiaze/mail-webhook.git'
+                git branch: 'main', credentialsId: '', url: 'https://github.com/karmazynowyksiaze/mail-webhook.git'
             }
-        }
+}
 
         stage('Build Docker image') {
             steps {
